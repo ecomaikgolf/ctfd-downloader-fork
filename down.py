@@ -23,6 +23,8 @@ def main(url, token, cookie, output):
         }
         s.cookies.update(cookies)
 
+    s.headers.update({'Content-Type': 'application/json'})
+
     os.makedirs(output, exist_ok=True)
 
     with s.get(url + CHALLENGES_PATH) as r:
@@ -30,7 +32,12 @@ def main(url, token, cookie, output):
             print('Error fetching challenges')
             return
 
-        challenges = r.json()['data']
+        try:
+            challenges = r.json()['data']
+        except:
+            print('Error parsing challenges')
+            print(r.text)
+            return
 
     print(f'Found {len(challenges)} challenges')
 
@@ -41,13 +48,15 @@ def main(url, token, cookie, output):
 
         challenge_name_dir = challenge_name.replace(' ', '-').lower()
         challenge_category_dir = challenge_category.replace(' ', '-').lower()
-        challenge_output = os.path.join(output, challenge_category_dir, challenge_name_dir)
+        challenge_output = os.path.join(
+            output, challenge_category_dir, challenge_name_dir)
         os.makedirs(challenge_output, exist_ok=True)
 
         print(f'Downloading {challenge_name} ({challenge_category})')
 
         if os.path.exists(os.path.join(challenge_output, 'description.md')):
-            print(f'Skipping {challenge_name} ({challenge_category}), already downloaded')
+            print(
+                f'Skipping {challenge_name} ({challenge_category}), already downloaded')
             continue
 
         with s.get(url + CHALLENGE_PATH.format(challenge_id)) as r:
@@ -74,14 +83,15 @@ def main(url, token, cookie, output):
                         f.write(chunk)
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CTFd Downloader')
-    parser.add_argument('-u', '--url', type=str, help='CTFd URL', required=True)
+    parser.add_argument('-u', '--url', type=str,
+                        help='CTFd URL', required=True)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-t', '--token', type=str, help='CTFd API Token')
     group.add_argument('-c', '--cookie', type=str, help='CTFd Session Cookie')
-    parser.add_argument('-o', '--output', type=str, help='Output directory', required=False, default='.')
+    parser.add_argument('-o', '--output', type=str,
+                        help='Output directory', required=False, default='.')
 
     args = parser.parse_args()
 
