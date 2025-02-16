@@ -12,7 +12,13 @@ CHALLENGE_PATH = '/api/v1/challenges/{}'
 def clean_name(name):
     name = name.replace(' ', '-').lower()
     valid = string.ascii_lowercase + string.digits + '-'
-    return ''.join(c for c in name if c in valid)
+    name = ''.join(c for c in name if c in valid)
+    while name.startswith('-'):
+        name = name[1:]
+
+    name = name.replace('--', '-')
+
+    return name
 
 
 def main(url, token, cookie, output):
