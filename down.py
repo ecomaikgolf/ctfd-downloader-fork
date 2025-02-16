@@ -2,10 +2,17 @@
 import requests
 import argparse
 import os
+import string
 
 
 CHALLENGES_PATH = '/api/v1/challenges'
 CHALLENGE_PATH = '/api/v1/challenges/{}'
+
+
+def clean_name(name):
+    name = name.replace(' ', '-').lower()
+    valid = string.ascii_lowercase + string.digits + '-'
+    return ''.join(c for c in name if c in valid)
 
 
 def main(url, token, cookie, output):
@@ -46,8 +53,8 @@ def main(url, token, cookie, output):
         challenge_name = challenge['name']
         challenge_category = challenge['category']
 
-        challenge_name_dir = challenge_name.replace(' ', '-').lower()
-        challenge_category_dir = challenge_category.replace(' ', '-').lower()
+        challenge_name_dir = clean_name(challenge_name)
+        challenge_category_dir = clean_name(challenge_category)
         challenge_output = os.path.join(
             output, challenge_category_dir, challenge_name_dir)
         os.makedirs(challenge_output, exist_ok=True)
