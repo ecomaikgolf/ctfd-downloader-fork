@@ -3,6 +3,7 @@ import requests
 import argparse
 import os
 import string
+from hashlib import md5
 
 
 CHALLENGES_PATH = '/api/v1/challenges'
@@ -10,6 +11,7 @@ CHALLENGE_PATH = '/api/v1/challenges/{}'
 
 
 def clean_name(name):
+    original_name = name
     name = name.replace(' ', '-').lower()
     valid = string.ascii_lowercase + string.digits + '-'
     name = ''.join(c for c in name if c in valid)
@@ -17,6 +19,9 @@ def clean_name(name):
         name = name[1:]
 
     name = name.replace('--', '-')
+
+    if name == '':
+        name = 'unnamed-' + md5(original_name.encode()).hexdigest()[:8]
 
     return name
 
