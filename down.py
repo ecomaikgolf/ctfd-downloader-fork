@@ -9,6 +9,17 @@ from hashlib import md5
 CHALLENGES_PATH = '/api/v1/challenges'
 CHALLENGE_PATH = '/api/v1/challenges/{}'
 
+CYAN = '\033[96m'
+RED = '\033[91m'
+GREEN = '\033[92m'
+END = '\033[0m'
+
+
+def spinning_cursor():
+    while True:
+        for cursor in '|/-\\':
+            yield cursor
+
 
 def clean_name(name):
     original_name = name
@@ -53,11 +64,11 @@ def main(url, token, cookie, output):
         try:
             challenges = r.json()['data']
         except:
-            print('Error parsing challenges')
+            print(f'{RED}[!] Error parsing challenges{END}')
             print(r.text)
             return
 
-    print(f'Found {len(challenges)} challenges')
+    print(f'{GREEN}[+] Found {len(challenges)} challenges{END}')
 
     for challenge in challenges:
         challenge_id = challenge['id']
@@ -70,16 +81,15 @@ def main(url, token, cookie, output):
             output, challenge_category_dir, challenge_name_dir)
         os.makedirs(challenge_output, exist_ok=True)
 
-        print(f'Downloading {challenge_name} ({challenge_category})')
+        print(f'Downloading {challenge_name} ({challenge_category})', end=' ')
 
         if os.path.exists(os.path.join(challenge_output, 'description.md')):
-            print(
-                f'Skipping {challenge_name} ({challenge_category}), already downloaded')
+            print('... Skipping, already downloaded')
             continue
 
         with s.get(url + CHALLENGE_PATH.format(challenge_id)) as r:
             if r.status_code != 200:
-                print(f'Error fetching challenge {challenge_id}')
+                print(f'{RED}Error fetching challenge {challenge_id}{END}')
                 continue
 
             challenge_data = r.json()['data']
@@ -90,6 +100,7 @@ def main(url, token, cookie, output):
         with open(os.path.join(challenge_output, 'description.md'), 'w') as f:
             f.write(description)
 
+        spinner = spinning_cursor()
         for file in files:
             file_url = url + file
             file_name = file.split('/')[-1].split('?')[0]
@@ -98,7 +109,12 @@ def main(url, token, cookie, output):
             with s.get(file_url, stream=True) as r:
                 with open(file_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            print(next(spinner), end='', flush=True)
+                            print('\b', end='', flush=True)
                         f.write(chunk)
+
+        print(f'{GREEN}Done{END}')
 
 
 if __name__ == '__main__':
